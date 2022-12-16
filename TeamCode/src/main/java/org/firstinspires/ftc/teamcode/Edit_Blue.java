@@ -10,8 +10,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-@TeleOp(name="Basic: Linear OpMode", group="Linear Opmode")
-@Disabled
+@TeleOp(name="TeleOp")
 public class Edit_Blue extends LinearOpMode {
 
     // controls
@@ -20,10 +19,12 @@ public class Edit_Blue extends LinearOpMode {
     double backward = gamepad1.left_trigger;
     double forward = gamepad1.right_trigger;
     double turn = gamepad1.right_stick_x;
-    double ElevatorPower = booleanAsDouble(gamepad1.dpad_up, gamepad1.dpad_down, 0.7, 0.7, 0);
+    double ElevatorPower = TwoBooleanAsDouble(gamepad1.dpad_up, gamepad1.dpad_down, 1, -1, 0);
+    double BackMechanismPower = TwoBooleanAsDouble(gamepad1.a, gamepad1.y, 1, -1, 0);
+    double BackIntakePower = Range.clip(booleanAsDouble(gamepad1.x, 1, 0) + booleanAsDouble(gamepad1.y, 1, 0) , 0, 1) - booleanAsDouble(gamepad1.b, 1, 0);
 
 
-    // Names of Motors
+    // Names and Directions of Motors
     String leftmotor = "leftmotor";
     DcMotorSimple.Direction leftmotorDirection = DcMotorSimple.Direction.REVERSE;
 
@@ -43,11 +44,11 @@ public class Edit_Blue extends LinearOpMode {
     DcMotorSimple.Direction coneGrabberThingRightDirection = DcMotorSimple.Direction.FORWARD;
 
 
-    // Names of Servos
+    // Names and Directions of Servos
     String CRServoRight = "rightWheel";
     CRServo.Direction CRServoRightDirection = CRServo.Direction.FORWARD;
     String CRServoLeft = "leftWheel";
-    CRServo.Direction CRServoLefttDirection = CRServo.Direction.FORWARD;
+    CRServo.Direction CRServoLeftDirection = CRServo.Direction.REVERSE;
 
     String ElevatorbaseLeft = "leftBase";
     String ElevatorbaseRight = "rightBase";
@@ -87,9 +88,9 @@ public class Edit_Blue extends LinearOpMode {
         backMechcanismLeft.setDirection(coneGrabberThingLeftDirection);
                     // -- Servos -- \\
         BackIntakeLeft = hardwareMap.get(CRServo.class, CRServoLeft);
-        BackIntakeLeft.setDirection(CRServo.Direction.FORWARD);
+        BackIntakeLeft.setDirection(CRServoLeftDirection);
         BackIntakeRight = hardwareMap.get(CRServo.class, CRServoRight);
-        BackIntakeRight.setDirection(CRServo.Direction.FORWARD);
+        BackIntakeRight.setDirection(CRServoRightDirection);
         EServoLeft = hardwareMap.get(Servo.class, ElevatorbaseLeft);
         EServoRight = hardwareMap.get(Servo.class, ElevatorbaseRight);
         EServoMid = hardwareMap.get(Servo.class, interestingDesignedBlueConeGrabber);
@@ -111,8 +112,15 @@ public class Edit_Blue extends LinearOpMode {
             elevatorRight.setPower(ElevatorPower);
             elevatorLeft.setPower(ElevatorPower);
 
+            backMechcanismLeft.setPower(BackMechanismPower);
+            backMechcanismRight.setPower(BackMechanismPower);
+
+            BackIntakeRight.setPower(BackIntakePower);
+            BackIntakeLeft.setPower(BackIntakePower);
+
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            telemetry.addData("Mechanisms", "Elevator (%.2f), BackMechanism (%.2f)", ElevatorPower, BackMechanismPower);
             telemetry.update();
         }
     }
@@ -122,10 +130,14 @@ public class Edit_Blue extends LinearOpMode {
      * @param B button input that outputs min
      * @apiNote if both A and B are true or false base will be returned
      * */
-    public double booleanAsDouble(boolean A, boolean B, double max, double min, double base){
+    public double TwoBooleanAsDouble(boolean A, boolean B, double max, double min, double base){
         if(A && B) return base;
         else if(A) return max;
         else if (B) return min;
         else return base;
+    }
+    public double booleanAsDouble(boolean Input, double True, double False){
+        if(Input) return True;
+        else return False;
     }
 }
